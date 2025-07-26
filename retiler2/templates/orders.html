@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5><i class="bi bi-list-check"></i> My Orders</h5>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <form method="get" action="{{ url_for('orders') }}">
+                    <div class="input-group">
+                        <select class="form-select" name="status">
+                            <option value="">All Statuses</option>
+                            <option value="Ordered" {% if status_filter == 'Ordered' %}selected{% endif %}>Ordered</option>
+                            <option value="Packed" {% if status_filter == 'Packed' %}selected{% endif %}>Packed</option>
+                            <option value="Out for Delivery" {% if status_filter == 'Out for Delivery' %}selected{% endif %}>Out for Delivery</option>
+                            <option value="Delivered" {% if status_filter == 'Delivered' %}selected{% endif %}>Delivered</option>
+                        </select>
+                        <button class="btn btn-primary" type="submit">Filter</button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-8">
+                <form method="get" action="{{ url_for('orders') }}" class="row g-2">
+                    <div class="col-md-5">
+                        <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+                    </div>
+                    <div class="col-md-5">
+                        <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100" type="submit">Apply</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        {% if orders %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>{{ order.OrderID }}</td>
+                        <td>{{ order.ProductName }}</td>
+                        <td>{{ order.Quantity }}</td>
+                        <td>₹{{ "%.2f"|format(order.Price) }}</td>
+                        <td>₹{{ "%.2f"|format(order.Total) }}</td>
+                        <td>{{ order.OrderDate.strftime('%Y-%m-%d') if order.OrderDate is defined else '' }}</td>
+                        <td>
+                            <span class="badge bg-{% if order.Status == 'Delivered' %}success{% elif order.Status == 'Cancelled' %}danger{% else %}primary{% endif %}">
+                                {{ order.Status }}
+                            </span>
+                            {% if delivery_statuses.get(order.OrderID) %}
+                            <small class="d-block text-muted">
+                                Agent: {{ delivery_statuses[order.OrderID].DeliveryAgent }}<br>
+                                Last Update: {{ delivery_statuses[order.OrderID].LastUpdate.strftime('%Y-%m-%d %H:%M') if delivery_statuses[order.OrderID].LastUpdate is defined else '' }}
+                            </small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('download_invoice', order_id=order.OrderID) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-download"></i> Invoice
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            No orders found matching your criteria.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
