@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="bi bi-robot"></i> AI Assistant</h5>
+            </div>
+            <div class="card-body">
+                <div class="chat-container" style="height: 400px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #eee; padding: 15px; border-radius: 5px;">
+                    {% if query %}
+                    <div class="chat-message user-message mb-3">
+                        <strong>You:</strong> {{ query }}
+                    </div>
+                    <div class="chat-message bot-message">
+                        <strong>Nomii AI:</strong> {{ response }}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-robot" style="font-size: 3rem;"></i>
+                        <h5>How can I help you today?</h5>
+                        <p>Try asking about your orders, product suggestions, or restock predictions</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <form method="post">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="query" placeholder="Ask me anything..." required>
+                        <button class="btn btn-primary" type="submit"><i class="bi bi-send"></i> Send</button>
+                    </div>
+                    <small class="text-muted">Examples: "Track my last order", "Suggest trending products", "What should I restock?"</small>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5><i class="bi bi-lightbulb"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{{ url_for('products') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-box-seam"></i> Browse Products
+                    </a>
+                    <a href="{{ url_for('orders') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-list-check"></i> View My Orders
+                    </a>
+                    <a href="{{ url_for('dashboard') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-graph-up"></i> View Insights
+                    </a>
+                </div>
+                
+                <hr>
+                
+                <h6>AI Capabilities</h6>
+                <ul class="list-unstyled">
+                    <li><i class="bi bi-check-circle text-success"></i> Order tracking</li>
+                    <li><i class="bi bi-check-circle text-success"></i> Product suggestions</li>
+                    <li><i class="bi bi-check-circle text-success"></i> Restock predictions</li>
+                    <li><i class="bi bi-check-circle text-success"></i> Combo deals</li>
+                    <li><i class="bi bi-check-circle text-success"></i> Spending insights</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

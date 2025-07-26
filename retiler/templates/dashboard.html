@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="bi bi-speedometer2"></i> Dashboard Overview</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">Weekly Spending</h6>
+                                <canvas id="weeklySpendingChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">Top Products</h6>
+                                <canvas id="topProductsChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Welcome back, {{ session.get('shop_name') }}! 
+                    {% if weekly_insights %}
+                        Your average order value is ₹{{ weekly_insights.avg_order_value }} from {{ weekly_insights.order_count }} orders.
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5><i class="bi bi-lightbulb"></i> Smart Suggestions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if restock_predictions %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-header bg-warning text-dark">
+                                <h6><i class="bi bi-exclamation-triangle"></i> Restock Predictions</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group">
+                                    {% for prediction in restock_predictions %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        {{ prediction.product }}
+                                        <span class="badge bg-{% if prediction.urgency == 'high' %}danger{% else %}warning{% endif %}">
+                                            {{ prediction.message }}
+                                        </span>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if combo_suggestions %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h6><i class="bi bi-tags"></i> Combo Deals</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group">
+                                    {% for combo in combo_suggestions %}
+                                    <a href="{{ url_for('products') }}" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">{{ combo.products }}</h6>
+                                            <small class="text-success">{{ combo.discount }}</small>
+                                        </div>
+                                        <small class="text-muted">{{ combo.reason }}</small>
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="bi bi-cart"></i> Quick Order</h5>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-outline-primary mb-3 w-100" id="voiceOrderBtn">
+                    <i class="bi bi-mic"></i> Voice Order
+                </button>
+                <div class="d-none" id="voiceOrderStatus">
+                    <div class="mb-2">Listening... <span class="spinner-border spinner-border-sm"></span></div>
+                    <button class="btn btn-danger btn-sm" id="stopListeningBtn">Stop</button>
+                </div>
+                <div id="voiceOrderResult" class="mt-2"></div>
+                
+                <hr>
+                
+                <h6>Suggested Products</h6>
+                <div class="list-group">
+                    {% for product in suggestions %}
+                    <a href="{{ url_for('products') }}?search={{ product.Name }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ product.Name }}</h6>
+                            <small>₹{{ product.Price }}</small>
+                        </div>
+                        <small class="text-muted">{{ product.Category }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5><i class="bi bi-truck"></i> Recent Orders</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_orders %}
+                <div class="list-group">
+                    {% for order in recent_orders %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Order #{{ order.OrderID }}</h6>
+                            <small class="text-{% if order.Status == 'Delivered' %}success{% elif order.Status == 'Cancelled' %}danger{% else %}primary{% endif %}">
+                                {{ order.Status }}
+                            </small>
+                        </div>
+                        <p class="mb-1">{{ order.ProductName }} ({{ order.Quantity }} × ₹{{ order.Price }})</p>
+                        <small class="text-muted">{{ order.OrderDate }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                <a href="{{ url_for('orders') }}" class="btn btn-outline-info mt-3 w-100">View All Orders</a>
+                {% else %}
+                <p class="text-muted">No recent orders found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Weekly Spending Chart
+    const weeklyCtx = document.getElementById('weeklySpendingChart').getContext('2d');
+    const weeklyChart = new Chart(weeklyCtx, {
+        type: 'line',
+        data: {
+            labels: {% if weekly_insights %}{{ weekly_insights.weekly_spending|map(attribute='OrderDate')|list|tojson }}{% else %}[]{% endif %},
+            datasets: [{
+                label: 'Weekly Spending (₹)',
+                data: {% if weekly_insights %}{{ weekly_insights.weekly_spending|map(attribute='Total')|list|tojson }}{% else %}[]{% endif %},
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Top Products Chart
+    const productsCtx = document.getElementById('topProductsChart').getContext('2d');
+    const productsChart = new Chart(productsCtx, {
+        type: 'bar',
+        data: {
+            labels: {% if weekly_insights %}{{ weekly_insights.top_products|map(attribute='ProductName')|list|tojson }}{% else %}[]{% endif %},
+            datasets: [{
+                label: 'Quantity Sold',
+                data: {% if weekly_insights %}{{ weekly_insights.top_products|map(attribute='Quantity')|list|tojson }}{% else %}[]{% endif %},
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Voice Order
+    const voiceOrderBtn = document.getElementById('voiceOrderBtn');
+    const voiceOrderStatus = document.getElementById('voiceOrderStatus');
+    const voiceOrderResult = document.getElementById('voiceOrderResult');
+    const stopListeningBtn = document.getElementById('stopListeningBtn');
+    
+    if (voiceOrderBtn) {
+        voiceOrderBtn.addEventListener('click', startVoiceOrder);
+    }
+    
+    if (stopListeningBtn) {
+        stopListeningBtn.addEventListener('click', stopVoiceOrder);
+    }
+    
+    let recognition;
+    
+    function startVoiceOrder() {
+        voiceOrderBtn.classList.add('d-none');
+        voiceOrderStatus.classList.remove('d-none');
+        voiceOrderResult.innerHTML = '';
+        
+        try {
+            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-IN';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                voiceOrderResult.innerHTML = `<div class="alert alert-info">Processing: "${transcript}"</div>`;
+                
+                // Send to server for processing
+                fetch('/voice_order', {
+                    method: 'POST',
+                    body: new FormData()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        voiceOrderResult.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                        updateCartCount(data.cart_size);
+                    } else {
+                        voiceOrderResult.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+                    }
+                })
+                .catch(error => {
+                    voiceOrderResult.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                })
+                .finally(() => {
+                    voiceOrderBtn.classList.remove('d-none');
+                    voiceOrderStatus.classList.add('d-none');
+                });
+            };
+            
+            recognition.onerror = function(event) {
+                voiceOrderResult.innerHTML = `<div class="alert alert-danger">Error: ${event.error}</div>`;
+                voiceOrderBtn.classList.remove('d-none');
+                voiceOrderStatus.classList.add('d-none');
+            };
+            
+            recognition.start();
+        } catch (e) {
+            voiceOrderResult.innerHTML = `<div class="alert alert-danger">Voice recognition not supported: ${e.message}</div>`;
+            voiceOrderBtn.classList.remove('d-none');
+            voiceOrderStatus.classList.add('d-none');
+        }
+    }
+    
+    function stopVoiceOrder() {
+        if (recognition) {
+            recognition.stop();
+        }
+        voiceOrderBtn.classList.remove('d-none');
+        voiceOrderStatus.classList.add('d-none');
+    }
+    
+    function updateCartCount(count) {
+        const cartCount = document.getElementById('cart-count');
+        if (cartCount) {
+            cartCount.textContent = count;
+        }
+    }
+});
+</script>
+{% endblock %}
