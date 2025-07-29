@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4><i class="bi bi-credit-card"></i> Checkout</h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="mb-3">Order Summary</h5>
+                    
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                    <th>Quantity</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in cart %}
+                                <tr>
+                                    <td>{{ item.ProductName }}</td>
+                                    <td>₹{{ item.Price }}</td>
+                                    <td>{{ item.Quantity }}</td>
+                                    <td>₹{{ item.Total }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-active">
+                                    <th colspan="3" class="text-end">Total:</th>
+                                    <th>₹{{ total }}</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h5 class="mb-3">Delivery Information</h5>
+                    <form id="checkoutForm" action="{{ url_for('place_order') }}" method="POST">
+                        <div class="mb-3">
+                            <label for="deliveryAddress" class="form-label">Delivery Address</label>
+                            <textarea class="form-control" id="deliveryAddress" name="deliveryAddress" rows="3" required>{{ current_user.address if current_user.address else '' }}</textarea>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" value="{{ current_user.phone if current_user.phone else '' }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="paymentMethod" class="form-label">Payment Method</label>
+                                <select class="form-select" id="paymentMethod" name="paymentMethod" required>
+                                    <option value="">Select payment method</option>
+                                    <option value="COD">Cash on Delivery</option>
+                                    <option value="Card">Credit/Debit Card</option>
+                                    <option value="UPI">UPI Payment</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div id="cardDetails" class="mb-3 d-none">
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label for="cardNumber" class="form-label">Card Number</label>
+                                    <input type="text" class="form-control" id="cardNumber" name="cardNumber" placeholder="1234 5678 9012 3456">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="expiry" class="form-label">Expiry Date</label>
+                                    <input type="text" class="form-control" id="expiry" name="expiry" placeholder="MM/YY">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="cvv" class="form-label">CVV</label>
+                                    <input type="text" class="form-control" id="cvv" name="cvv" placeholder="123">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="cardName" class="form-label">Name on Card</label>
+                                    <input type="text" class="form-control" id="cardName" name="cardName" placeholder="John Doe">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="upiDetails" class="mb-3 d-none">
+                            <div class="mb-3">
+                                <label for="upiId" class="form-label">UPI ID</label>
+                                <input type="text" class="form-control" id="upiId" name="upiId" placeholder="yourname@upi">
+                            </div>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                            <label class="form-check-label" for="termsCheck">
+                                I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-check-circle"></i> Confirm Order
+                            </button>
+                            <a href="{{ url_for('view_cart') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Cart
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5><i class="bi bi-truck"></i> Delivery Options</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="deliveryOption" id="standardDelivery" checked>
+                            <label class="form-check-label" for="standardDelivery">
+                                <strong>Standard Delivery</strong><br>
+                                <small>3-5 business days</small><br>
+                                <small>Free</small>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="deliveryOption" id="expressDelivery">
+                            <label class="form-check-label" for="expressDelivery">
+                                <strong>Express Delivery</strong><br>
+                                <small>1-2 business days</small><br>
+                                <small>₹99</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h5><i class="bi bi-percent"></i> Apply Coupon</h5>
+                </div>
+                <div class="card-body">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Coupon code">
+                        <button class="btn btn-outline-primary" type="button">Apply</button>
+                    </div>
+                    <div id="couponMessage" class="small text-muted">
+                        Have a coupon? Enter it above to get discounts.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terms and Conditions Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termsModalLabel">Terms and Conditions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>Order Processing</h6>
+                <p>Orders are typically processed within 1-2 business days. You will receive a confirmation email once your order has been shipped.</p>
+                
+                <h6>Returns Policy</h6>
+                <p>You may return most new, unopened items within 30 days of delivery for a full refund. We'll also pay the return shipping costs if the return is a result of our error.</p>
+                
+                <h6>Privacy Policy</h6>
+                <p>We respect your privacy and are committed to protecting it. We do not sell or share your personal information with third parties except as necessary to fulfill your order.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show/hide payment method details
+    const paymentMethod = document.getElementById('paymentMethod');
+    const cardDetails = document.getElementById('cardDetails');
+    const upiDetails = document.getElementById('upiDetails');
+    
+    paymentMethod.addEventListener('change', function() {
+        cardDetails.classList.add('d-none');
+        upiDetails.classList.add('d-none');
+        
+        if (this.value === 'Card') {
+            cardDetails.classList.remove('d-none');
+        } else if (this.value === 'UPI') {
+            upiDetails.classList.remove('d-none');
+        }
+    });
+    
+    // Form validation
+    const checkoutForm = document.getElementById('checkoutForm');
+    checkoutForm.addEventListener('submit', function(e) {
+        const termsCheck = document.getElementById('termsCheck');
+        if (!termsCheck.checked) {
+            e.preventDefault();
+            alert('Please agree to the Terms and Conditions');
+            termsCheck.focus();
+        }
+    });
+    
+    // Coupon code handling
+    const couponBtn = document.querySelector('#checkoutForm button[type="button"]');
+    if (couponBtn) {
+        couponBtn.addEventListener('click', function() {
+            const couponMessage = document.getElementById('couponMessage');
+            couponMessage.innerHTML = '<span class="text-success">Coupon applied successfully!</span>';
+        });
+    }
+});
+</script>
+{% endblock %}

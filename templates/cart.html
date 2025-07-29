@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="bi bi-cart"></i> Shopping Cart</h5>
+            </div>
+            <div class="card-body">
+                {% if cart %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Total</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in cart %}
+                            <tr>
+                                <td>{{ item.ProductName }}</td>
+                                <td>₹{{ item.Price }}</td>
+                                <td>
+                                    <input type="number" class="form-control quantity-input" 
+                                           value="{{ item.Quantity }}" min="1" 
+                                           data-product-id="{{ item.ProductID }}" 
+                                           style="width: 70px;">
+                                </td>
+                                <td>₹{{ item.Total }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-danger remove-item" 
+                                            data-product-id="{{ item.ProductID }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    Your cart is empty. <a href="{{ url_for('products') }}">Browse products</a> to add items.
+                </div>
+                {% endif %}
+            </div>
+            {% if cart %}
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Total: ₹{{ total }}</h5>
+                    <a href="{{ url_for('place_order') }}" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Place Order
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5><i class="bi bi-lightbulb"></i> Smart Suggestions</h5>
+            </div>
+            <div class="card-body">
+                {% if combo_suggestions %}
+                <h6>Frequently Bought Together</h6>
+                <div class="list-group mb-3">
+                    {% for combo in combo_suggestions %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ combo.products }}</h6>
+                            <small class="text-success">{{ combo.discount }}</small>
+                        </div>
+                        <small class="text-muted">{{ combo.reason }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <h6>AI Recommendations</h6>
+                <div class="list-group">
+                    {% for product in suggestions %}
+                    <a href="{{ url_for('products') }}?search={{ product.Name }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ product.Name }}</h6>
+                            <small>₹{{ product.Price }}</small>
+                        </div>
+                        <small class="text-muted">{{ product.Category }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Quantity change
+    const quantityInputs = document.querySelectorAll('.quantity-input');
+    
+    quantityInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            const productId = this.getAttribute('data-product-id');
+            const quantity = this.value;
+            
+            updateCartItem(productId, quantity);
+        });
+    });
+    
+    // Remove item
+    const removeButtons = document.querySelectorAll('.remove-item');
+    
+    removeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.getAttribute('data-product-id');
+            updateCartItem(productId, 0); // 0 quantity removes the item
+        });
+    });
+    
+    function updateCartItem(productId, quantity) {
+        fetch('/update_cart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `product_id=${productId}&quantity=${quantity}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload the page to reflect changes
+                window.location.reload();
+            } else {
+                alert('Error updating cart: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+});
+</script>
+{% endblock %}

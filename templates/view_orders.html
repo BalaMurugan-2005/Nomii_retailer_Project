@@ -1,0 +1,51 @@
+<!-- templates/view_orders.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Orders</title>
+</head>
+<body>
+    <h1>All Orders</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <p style="color: {% if category == 'error' %}red{% elif category == 'info' %}blue{% endif %};">{{ message }}</p>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% if orders %}
+        <table border="1">
+            <tr>
+                <th>Order ID</th>
+                <th>Retailer Name</th>
+                <th>Email</th>
+                <th>Product Name</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Ordered Date</th>
+                <th>Supplier ID</th>
+                <th>Product ID</th>
+            </tr>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order['Order ID'] }}</td>
+                <td>{{ order['Retailer Name'] }}</td>
+                <td>{{ order['Email'] }}</td>
+                <td>{{ order['Product Name'] }}</td>
+                <td>{{ order['Quantity'] }}</td>
+                <td>{{ order['Price'] }}</td>
+                <td>{{ order['Status'] }}</td>
+                <td>{{ order['Ordered Date'] }}</td>
+                <td>{{ order['Supplier ID'] }}</td>
+                <td>{{ order['Product ID'] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No orders available.</p>
+    {% endif %}
+</body>
+</html>

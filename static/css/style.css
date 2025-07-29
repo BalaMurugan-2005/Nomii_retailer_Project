@@ -1,0 +1,61 @@
+body {
+    background-color: #f8f9fa;
+    padding-top: 20px;
+}
+
+.card {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.table th {
+    background-color: #f8f9fa;
+}
+
+.chat-message {
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.user-message {
+    background-color: #e9f5ff;
+    margin-left: 20%;
+}
+
+.bot-message {
+    background-color: #f0f0f0;
+    margin-right: 20%;
+}
+
+.progress {
+    height: 10px;
+}
+
+#voiceOrderStatus {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.quantity-input {
+    width: 60px;
+    text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 15px;
+    }
+    
+    .user-message, .bot-message {
+        margin-left: 0;
+        margin-right: 0;
+    }
+}

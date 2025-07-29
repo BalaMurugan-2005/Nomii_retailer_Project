@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5><i class="bi bi-list-check"></i> All Orders</h5>
+    </div>
+    <div class="card-body">
+        {% if orders %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Retailer ID</th>
+                        <th>Product</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                        <th>Order Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>{{ order.OrderID }}</td>
+                        <td>{{ order.RetailerID }}</td>
+                        <td>{{ order.ProductName }}</td>
+                        <td>{{ order.Quantity }}</td>
+                        <td>₹{{ "%.2f"|format(order.Price) }}</td>
+                        <td>₹{{ "%.2f"|format(order.Total) }}</td>
+                        <td>{{ order.OrderDate.strftime('%d-%m-%Y') if order.OrderDate else 'N/A' }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if order.Status == 'Delivered' %}bg-success
+                                {% elif order.Status == 'In Transit' %}bg-primary
+                                {% elif order.Status == 'Pending' %}bg-warning
+                                {% else %}bg-secondary{% endif %}">
+                                {{ order.Status }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('download_invoice', order_id=order.OrderID) }}" 
+                               class="btn btn-sm btn-outline-primary" title="Download Invoice">
+                                <i class="bi bi-download"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> No orders found in the system.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
